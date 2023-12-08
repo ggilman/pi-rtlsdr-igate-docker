@@ -97,4 +97,5 @@ fi
 
 echo "Starting Direwolf"
 # "-t O" disables colors when logging
-rtl_fm -f 144.39M - | direwolf -c $CONF -t 0 -r 24000 -D 1 -
+#should be 144.39
+rtl_fm -f $APRS_FREQUENCY - | direwolf -c $CONF -t 0 -r 24000 -D 1 -
