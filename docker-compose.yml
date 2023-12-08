@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  app:
+    image: ggilman/rtlsdr-igate-docker:latest
+    container_name: aprs
+    restart: unless-stopped
+    network_mode: bridge
+   # priviliged: true
+    environment:
+      - MYCALL=W4GHG-10
+      - APRS_PASSWORD=9374
+     # - COMMENT='Cool comment'
+      - LATITUDE=30.24344
+      - LONGITUDE=-85.61304
+      #- BEACON_EVERY=10
+     # - APRS_FREQUENCY=144.642M
+    devices:
+      - /dev/bus/usb
