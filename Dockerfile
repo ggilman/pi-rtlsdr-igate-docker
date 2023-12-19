@@ -11,6 +11,7 @@ ENV COMMENT "Docker APRS IGate"
 ENV LATITUDE 0.0
 ENV LONGITUDE 0.0
 ENV APRS_FREQUENCY 144.39M
+ENV DEVICE_INDEX 0
 
 RUN apt-get update  && \
 	apt-get upgrade -y && \

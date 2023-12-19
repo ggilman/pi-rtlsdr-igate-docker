@@ -11,6 +11,9 @@ if [ -z "$MYCALL" ]; then
 fi
 
 echo "MYCALL: $MYCALL"
+echo "APRS_FREQUENCY: $APRS_FREQUENCY"
+echo "DEVICE_INDEX: $DEVICE_INDEX"
+
 # Replace spots in config file with passed in environment
 # -i edits in place
 # -e indicates the expression/command to run
@@ -98,4 +101,4 @@ fi
 echo "Starting Direwolf"
 # "-t O" disables colors when logging
 #should be 144.39
-rtl_fm -f $APRS_FREQUENCY - | direwolf -c $CONF -t 0 -r 24000 -D 1 -
+rtl_fm -f $APRS_FREQUENCY - | direwolf -c $CONF -t 0 -r 24000 -d $DEVICE_INDEX -D 1 -

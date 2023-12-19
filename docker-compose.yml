@@ -14,5 +14,6 @@ services:
       - LONGITUDE=-85.61304
       #- BEACON_EVERY=10
      # - APRS_FREQUENCY=144.642M
+      - DEVICE_INDEX=0
     devices:
       - /dev/bus/usb
