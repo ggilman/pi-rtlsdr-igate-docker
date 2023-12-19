@@ -7,13 +7,15 @@ services:
     network_mode: bridge
    # priviliged: true
     environment:
-      - MYCALL=W4GHG-10
-      - APRS_PASSWORD=9374
-     # - COMMENT='Cool comment'
-      - LATITUDE=30.24344
-      - LONGITUDE=-85.61304
-      #- BEACON_EVERY=10
+      - MYCALL=MYCALLL #Mandatory!!
+      - APRS_PASSWORD=0 #MANDATORY!!
+
+     #Optional Entries
+     # - DEVICE_INDEX=0
+     # - COMMENT='Docker APRS Igate'
+     # - LATITUDE=30.24344
+     # - LONGITUDE=-85.61304
+     # - BEACON_EVERY=10
      # - APRS_FREQUENCY=144.642M
-      - DEVICE_INDEX=0
     devices:
       - /dev/bus/usb
