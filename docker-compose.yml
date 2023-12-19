@@ -5,17 +5,20 @@ services:
     container_name: aprs
     restart: unless-stopped
     network_mode: bridge
-   # priviliged: true
     environment:
-      - MYCALL=MYCALLL #Mandatory!!
-      - APRS_PASSWORD=0 #MANDATORY!!
+      - MYCALL=MYCALLL
+      - APRS_PASSWORD=0
 
      #Optional Entries
      # - DEVICE_INDEX=0
      # - COMMENT='Docker APRS Igate'
-     # - LATITUDE=30.24344
-     # - LONGITUDE=-85.61304
+      - LATITUDE=30.24344
+      - LONGITUDE=-85.61304
      # - BEACON_EVERY=10
-     # - APRS_FREQUENCY=144.642M
+     # - APRS_FREQUENCY=144.39M
+     # - IGSERVER='noam.aprs2.net'
+     # - BEACON_DELAY=1
+     # - BEACON_EVERY=10
+     # - BEACON_SYMBOL='R\&'
     devices:
       - /dev/bus/usb
