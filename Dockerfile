@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM alpine:latest
 
 MAINTAINER George Gilman
 
@@ -13,13 +13,14 @@ ENV LONGITUDE 0.0
 ENV APRS_FREQUENCY 144.39M
 ENV DEVICE_INDEX 0
 
-RUN apt-get update  && \
-	apt-get upgrade -y && \
-	apt-get install git gcc g++ make cmake -y  && \
-	apt-get install	libasound2-dev libudev-dev libavahi-client-dev -y && \
-	apt-get install libusb-1.0-0-dev -y
+RUN apk update  && \
+        apk add bash \
+        git gcc g++ make cmake \
+        alsa-lib-dev linux-headers alsa-lib \
+        musl-utils \
+        libusb-dev
 
-RUN mkdir /etc/modprobe.d
+#RUN mkdir /etc/modprobe.d
 RUN  echo "blacklist rtl2832\n\
 blacklist r820t\n\
 blacklist rtl2830\n\
@@ -32,8 +33,9 @@ RUN cd ~ \
 && cd build \
 && cmake ../ \
 && make \
-&& make install \
-&& ldconfig
+&& make install
+#RUN cd ~ && ls -l
+#RUN ldconfig
 
 RUN cd ~ \
 && git clone https://www.github.com/wb2osz/direwolf \
@@ -46,9 +48,7 @@ RUN cd ~ \
 
 COPY sdr-igate.conf.template ./
 COPY run.sh ./
+RUN ln -s ./usr/local/bin/rtl_fm ./rtl_fm
+RUN chmod +x ./rtl_fm
 
 CMD ./run.sh
-# ./run.sh
-#ls -l /etc
-#rtl_test
-# ./run.sh
