@@ -21,15 +21,19 @@ blacklist r820t\n\
 blacklist rtl2830\n\
 blacklist dvb_usb_rtl28xxu" > /etc/modprobe.d/rtlsdr-blacklist.conf
 
-RUN rm -rf rtl-sdr && git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
-    cd rtl-sdr && mkdir build && cd build && cmake ../ && make && make install
+WORKDIR /root
+RUN rm -rf rtl-sdr && git clone https://gitea.osmocom.org/argilo/rtl-sdr.git
 
-#RUN cd ~ && ls -l
-#RUN ldconfig
+WORKDIR /root/rtl-sdr/build
+RUN cmake ../ && make && make install
 
-RUN rm -rf direwolf && git clone https://www.github.com/wb2osz/direwolf && \
-    cd direwolf && mkdir build && cd build && cmake .. && make -j4 && make install && make install-conf
+WORKDIR /root
+RUN rm -rf direwolf && git clone https://www.github.com/wb2osz/direwolf
 
+WORKDIR /root/direwolf/build
+RUN cmake .. && make -j4 && make install && make install-conf
+
+WORKDIR /
 COPY sdr-igate.conf.template ./
 COPY run.sh ./
 RUN ln -s ./usr/local/bin/rtl_fm ./rtl_fm
