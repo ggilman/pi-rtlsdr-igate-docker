@@ -13,38 +13,22 @@ ENV LONGITUDE 0.0
 ENV APRS_FREQUENCY 144.39M
 ENV DEVICE_INDEX 0
 
-RUN apk update  && \
-        apk add bash \
-        git gcc g++ make cmake \
-        alsa-lib-dev linux-headers alsa-lib \
-        musl-utils \
-        libusb-dev
+RUN apk update && apk add --no-cache bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
 
 #RUN mkdir /etc/modprobe.d
-RUN  echo "blacklist rtl2832\n\
+RUN echo "blacklist rtl2832\n\
 blacklist r820t\n\
 blacklist rtl2830\n\
 blacklist dvb_usb_rtl28xxu" > /etc/modprobe.d/rtlsdr-blacklist.conf
 
-RUN cd ~ \
-&& git clone https://gitea.osmocom.org/argilo/rtl-sdr.git \
-&& cd rtl-sdr \
-&& mkdir build \
-&& cd build \
-&& cmake ../ \
-&& make \
-&& make install
+RUN rm -rf rtl-sdr && git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
+    cd rtl-sdr && mkdir build && cd build && cmake ../ && make && make install
+
 #RUN cd ~ && ls -l
 #RUN ldconfig
 
-RUN cd ~ \
-&& git clone https://www.github.com/wb2osz/direwolf \
-&& cd direwolf \
-&& mkdir build && cd build \
-&& cmake .. \
-&& make -j4 \
-&& make install \
-&& make install-conf
+RUN rm -rf direwolf && git clone https://www.github.com/wb2osz/direwolf && \
+    cd direwolf && mkdir build && cd build && cmake .. && make -j4 && make install && make install-conf
 
 COPY sdr-igate.conf.template ./
 COPY run.sh ./

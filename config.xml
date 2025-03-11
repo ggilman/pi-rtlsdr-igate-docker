@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<configuration>
+  <version>
+    <major>1</major>
+    <minor>4</minor>
+  </version>
+  <image>
+    <name>ggilman/rtlsdr-igate-docker</name>
+  </image>
+  <executable>
+    <name>./run.sh</name>
+  </executable>
+  <builder>
+    <name>mybuilder</name>
+  </builder>
+  <platforms>linux/amd64,linux/arm64/v8</platforms>
+  <extra_setting>some_value</extra_setting>
+</configuration>
