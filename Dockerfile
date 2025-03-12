@@ -24,6 +24,10 @@ RUN mkdir -p /usr/local/etc/
 # Copy the direwolf.conf file from the build directory
 RUN cp /build/direwolf/build/direwolf.conf /usr/local/etc/direwolf.conf
 
+# Cleanup build artifacts
+RUN rm -rf /build/rtl-sdr /build/direwolf \
+    && apk del bash git gcc g++ make cmake alsa-lib-dev linux-headers musl-utils libusb-dev
+
 # Stage 2: Final Image
 FROM alpine:latest
 
@@ -51,5 +55,7 @@ RUN apk update && apk add --no-cache alsa-lib libusb
 
 # Copy librtlsdr.so.2
 COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/librtlsdr.so.2
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/bin/sh", "-c", "ps aux | grep direwolf"]
 
 CMD ["./run.sh"]

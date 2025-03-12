@@ -48,7 +48,7 @@ configure_beacon () {
 	fi
 	if [ -n "$BEACON_SYMBOL" ]; then
 		echo "BEACON_SYMBOL: $BEACON_SYMBOL"
-		sed -i -e "s/{{BEACON_SYMBOL}}/${BEACON_SYMBOL}/g" $CONF
+		sed -i -e "s/{{BEACON_SYMBOL}}/$(echo "${BEACON_SYMBOL}" | sed 's/&/\\&/g')/g" $CONF
 	else
 		sed -i -e "s/{{BEACON_SYMBOL}}/igate/g" $CONF
 	fi
