@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 CONF_TEMPLATE=sdr-igate.conf.template
 CONF=sdr-igate.conf

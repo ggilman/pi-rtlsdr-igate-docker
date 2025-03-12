@@ -1,42 +1,55 @@
-FROM alpine:latest
+# Stage 1: Build Dependencies
+FROM alpine:latest AS builder
 
-MAINTAINER George Gilman
-
-#Create default settings
-ENV IGSERVER noam.aprs2.net
-ENV BEACON_DELAY 1
-ENV BEACON_EVERY 10
-ENV BEACON_SYMBOL R\&
-ENV COMMENT "Docker APRS IGate"
-ENV LATITUDE 0.0
-ENV LONGITUDE 0.0
-ENV APRS_FREQUENCY 144.39M
-ENV DEVICE_INDEX 0
-
+# Install build dependencies
 RUN apk update && apk add --no-cache bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
 
-#RUN mkdir /etc/modprobe.d
+# Blacklist rtl modules
 RUN echo "blacklist rtl2832\n\
 blacklist r820t\n\
 blacklist rtl2830\n\
 blacklist dvb_usb_rtl28xxu" > /etc/modprobe.d/rtlsdr-blacklist.conf
 
-WORKDIR /root
-RUN rm -rf rtl-sdr && git clone https://gitea.osmocom.org/argilo/rtl-sdr.git
+WORKDIR /build
+RUN git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
+    cd rtl-sdr && mkdir build && cd build && cmake ../ && make && make install
 
-WORKDIR /root/rtl-sdr/build
-RUN cmake ../ && make && make install
+WORKDIR /build
+RUN git clone https://www.github.com/wb2osz/direwolf && \
+    cd direwolf && mkdir build && cd build && cmake .. && make -j4 && make install
 
-WORKDIR /root
-RUN rm -rf direwolf && git clone https://www.github.com/wb2osz/direwolf
+# Create the /usr/local/etc directory
+RUN mkdir -p /usr/local/etc/
 
-WORKDIR /root/direwolf/build
-RUN cmake .. && make -j4 && make install && make install-conf
+# Copy the direwolf.conf file from the build directory
+RUN cp /build/direwolf/build/direwolf.conf /usr/local/etc/direwolf.conf
+
+# Stage 2: Final Image
+FROM alpine:latest
+
+# Create default settings
+ENV IGSERVER=noam.aprs2.net
+ENV BEACON_DELAY=1
+ENV BEACON_EVERY=10
+ENV BEACON_SYMBOL=R\&
+ENV COMMENT="Docker APRS IGate"
+ENV LATITUDE=0.0
+ENV LONGITUDE=0.0
+ENV APRS_FREQUENCY=144.39M
+ENV DEVICE_INDEX=0
 
 WORKDIR /
-COPY sdr-igate.conf.template ./
-COPY run.sh ./
-RUN ln -s ./usr/local/bin/rtl_fm ./rtl_fm
-RUN chmod +x ./rtl_fm
+COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/rtl_fm
+COPY --from=builder /usr/local/bin/direwolf /usr/local/bin/direwolf
+COPY --from=builder /usr/local/etc/direwolf.conf /usr/local/etc/direwolf.conf
+COPY sdr-igate.conf.template /
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
 
-CMD ./run.sh
+# Install runtime dependencies
+RUN apk update && apk add --no-cache alsa-lib libusb
+
+# Copy librtlsdr.so.2
+COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/librtlsdr.so.2
+
+CMD ["./run.sh"]
