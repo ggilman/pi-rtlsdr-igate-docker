@@ -5,10 +5,7 @@ FROM alpine:latest AS builder
 RUN apk update && apk add --no-cache --virtual .build-deps bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
 
 # Blacklist rtl modules
-RUN echo "blacklist rtl2832\n\
-blacklist r820t\n\
-blacklist rtl2830\n\
-blacklist dvb_usb_rtl28xxu" > /etc/modprobe.d/rtlsdr-blacklist.conf
+RUN echo "blacklist rtl2832\nblacklist r820t\nblacklist rtl2830\nblacklist dvb_usb_rtl28xxu" > /etc/modprobe.d/rtlsdr-blacklist.conf
 
 WORKDIR /build
 RUN git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
@@ -25,11 +22,13 @@ RUN mkdir -p /usr/local/etc/
 RUN cp /build/direwolf/build/direwolf.conf /usr/local/etc/direwolf.conf
 
 # Cleanup build artifacts and remove build dependencies
-RUN rm -rf /build/rtl-sdr /build/direwolf \
-    && apk del .build-deps
+RUN rm -rf /build/rtl-sdr /build/direwolf && apk del .build-deps
 
 # Stage 2: Final Image
 FROM alpine:latest
+
+LABEL maintainer="George Gilman"
+LABEL description="Docker APRS IGate"
 
 # Create default settings
 ENV IGSERVER=noam.aprs2.net
