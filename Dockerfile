@@ -2,7 +2,7 @@
 FROM alpine:latest AS builder
 
 # Install build dependencies
-RUN apk update && apk add --no-cache bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
+RUN apk update && apk add --no-cache --virtual .build-deps bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
 
 # Blacklist rtl modules
 RUN echo "blacklist rtl2832\n\
@@ -24,9 +24,9 @@ RUN mkdir -p /usr/local/etc/
 # Copy the direwolf.conf file from the build directory
 RUN cp /build/direwolf/build/direwolf.conf /usr/local/etc/direwolf.conf
 
-# Cleanup build artifacts
+# Cleanup build artifacts and remove build dependencies
 RUN rm -rf /build/rtl-sdr /build/direwolf \
-    && apk del bash git gcc g++ make cmake alsa-lib-dev linux-headers musl-utils libusb-dev
+    && apk del .build-deps
 
 # Stage 2: Final Image
 FROM alpine:latest
@@ -43,18 +43,17 @@ ENV APRS_FREQUENCY=144.39M
 ENV DEVICE_INDEX=0
 
 WORKDIR /
+
 COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/rtl_fm
 COPY --from=builder /usr/local/bin/direwolf /usr/local/bin/direwolf
 COPY --from=builder /usr/local/etc/direwolf.conf /usr/local/etc/direwolf.conf
-COPY sdr-igate.conf.template /
+COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/librtlsdr.so.2
+COPY sdr-igate.conf.template /sdr-igate.conf.template
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
 # Install runtime dependencies
 RUN apk update && apk add --no-cache alsa-lib libusb
-
-# Copy librtlsdr.so.2
-COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/librtlsdr.so.2
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/bin/sh", "-c", "ps aux | grep direwolf"]
 
