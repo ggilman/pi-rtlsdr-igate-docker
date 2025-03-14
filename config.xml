@@ -2,7 +2,7 @@
 <configuration>
   <version>
     <major>1</major>
-    <minor>5</minor>
+    <minor>7</minor>
   </version>
   <image>
     <name>ggilman/rtlsdr-igate-docker</name>
