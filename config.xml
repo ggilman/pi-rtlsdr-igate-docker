@@ -2,7 +2,7 @@
 <configuration>
   <version>
     <major>1</major>
-    <minor>7</minor>
+    <minor>9</minor>
   </version>
   <image>
     <name>ggilman/rtlsdr-igate-docker</name>
@@ -14,5 +14,6 @@
     <name>mybuilder</name>
   </builder>
   <platforms>linux/amd64,linux/arm64/v8</platforms>
+  <upstream_version>1.8.1</upstream_version>
   <extra_setting>some_value</extra_setting>
 </configuration>
