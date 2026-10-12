@@ -11,7 +11,7 @@ A Docker image (`ggilman/rtlsdr-igate-docker`) that runs a receive-only APRS IGa
 There is no test suite. Validate changes by building the image and running it:
 
 ```sh
-docker build --build-arg BASE_OS_TAG=3.23 -t igate-test .
+docker build -t igate-test .
 
 # Inspect the generated Direwolf config without an SDR attached (rtl_fm will exit with
 # "No supported devices found", which is expected). Direwolf still parses the config and reports errors.
@@ -28,7 +28,7 @@ Releases are built and pushed with the external script `~/scripts/build.sh` (not
 
 ## Architecture
 
-- **Dockerfile**: two-stage Alpine build. The builder compiles rtl-sdr (argilo fork, pinned via `RTLSDR_COMMIT`) and Direwolf (`APP_VERSION`, linked against gpsd for `GPSD_HOST` support). The final stage copies only `rtl_fm`, `direwolf` and `librtlsdr.so.2`, plus runtime packages (`alsa-lib libusb gpsd tini su-exec`). `tini -g` is the entrypoint so SIGTERM reaches both ends of the `rtl_fm | direwolf` pipeline.
+- **Dockerfile**: two-stage Alpine build. The builder compiles rtl-sdr (upstream osmocom, release tag `RTLSDR_VERSION`) and Direwolf (`APP_VERSION`, linked against gpsd for `GPSD_HOST` support). The final stage copies only `rtl_fm`, `direwolf` and `librtlsdr.so.0`, plus runtime packages (`alsa-lib libusb gpsd tini su-exec`). `tini -g` is the entrypoint so SIGTERM reaches both ends of the `rtl_fm | direwolf` pipeline.
 - **Privilege drop**: when started as root, `run.sh` first `chgrp igate` + `chmod g+rw` the passed-through `/dev/bus/usb` nodes and `$NMEA_GPS` (container-local copies, host is unaffected), then `exec su-exec igate "$0"` to re-run itself as the `igate` user (UID/GID 9001). Everything after that block runs unprivileged, so it must not need root.
 - **run.sh**: the container's entrypoint logic, POSIX `sh` (BusyBox ash, not bash). Owns all env var defaults (the Dockerfile sets no `ENV`). It renders `sdr-igate.conf.template` into `/tmp/sdr-igate.conf` with one `sed` pass: `subst NAME value` replaces `{{NAME}}` (escaping `\ | &`), and `enable DIRECTIVE` uncomments a `#DIRECTIVE` line. Writing to `/tmp` lets the container run with a read-only root filesystem.
 - **Position beacon modes** are mutually exclusive and checked in order: `LATITUDE`+`LONGITUDE` → `PBEACON`; `NMEA_GPS` → `GPSNMEA` + `TBEACON`; `GPSD_HOST` → `GPSD` + `TBEACON`; otherwise no beacon.

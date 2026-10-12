@@ -1,18 +1,17 @@
-ARG BASE_OS_TAG=3.21
+ARG BASE_OS_TAG=3.24
 
 # Stage 1: Build Dependencies
 FROM alpine:${BASE_OS_TAG} AS builder
 
 ARG APP_VERSION=1.8.1
-# Pinned commit of the argilo rtl-sdr fork (for reproducible builds)
-ARG RTLSDR_COMMIT=448a6551ab68ad143b5129b82b345f15c13f8825
+# Upstream osmocom rtl-sdr release tag
+ARG RTLSDR_VERSION=v2.0.3
 
 # Install build dependencies
 RUN apk add --no-cache git gcc g++ make cmake linux-headers alsa-lib-dev libusb-dev gpsd-dev
 
 WORKDIR /build
-RUN git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
-    git -C rtl-sdr checkout ${RTLSDR_COMMIT} && \
+RUN git clone --depth 1 --branch ${RTLSDR_VERSION} https://gitea.osmocom.org/sdr/rtl-sdr.git && \
     cmake -S rtl-sdr -B rtl-sdr/build -Wno-dev -DCMAKE_BUILD_TYPE=Release && \
     make -C rtl-sdr/build -j"$(nproc)" && make -C rtl-sdr/build install
 
@@ -21,7 +20,7 @@ RUN git clone --depth 1 --branch ${APP_VERSION} https://github.com/wb2osz/direwo
     make -C direwolf/build -j"$(nproc)" && make -C direwolf/build install
 
 # Strip debug symbols to shrink the final image
-RUN strip /usr/local/bin/rtl_fm /usr/local/bin/direwolf "$(readlink -f /usr/local/lib/librtlsdr.so.2)"
+RUN strip /usr/local/bin/rtl_fm /usr/local/bin/direwolf "$(readlink -f /usr/local/lib/librtlsdr.so.0)"
 
 # Stage 2: Final Image
 FROM alpine:${BASE_OS_TAG}
@@ -40,7 +39,7 @@ RUN addgroup -S -g 9001 igate && adduser -S -D -H -u 9001 -G igate -s /sbin/nolo
 WORKDIR /
 
 COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/direwolf /usr/local/bin/
-COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/
+COPY --from=builder /usr/local/lib/librtlsdr.so.0 /usr/local/lib/
 # Symbol and tocalls data used by direwolf to decode packet details
 COPY --from=builder /usr/local/share/direwolf /usr/local/share/direwolf
 COPY sdr-igate.conf.template /sdr-igate.conf.template
