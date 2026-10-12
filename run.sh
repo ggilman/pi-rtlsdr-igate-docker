@@ -20,6 +20,14 @@ if [ -z "$MYCALL" ]; then
 	exit 1
 fi
 
+# Direwolf treats these placeholder callsigns as unset and silently disables the IGate
+case "$(printf '%s' "$MYCALL" | tr '[:lower:]' '[:upper:]')" in
+	N0CALL|N0CALL-*|NOCALL|NOCALL-*)
+		echo "MYCALL is set to the placeholder $MYCALL; set it to your own callsign"
+		exit 1
+		;;
+esac
+
 if [ -z "$APRS_PASSWORD" ]; then
 	echo "APRS_PASSWORD environment variable must be set e.g. 123456"
 	exit 1
@@ -110,5 +118,7 @@ if [ -n "$RTL_PPM" ]; then
 fi
 
 echo "Starting Direwolf"
+# Exit non-zero if rtl_fm fails (e.g. SDR missing or unplugged) so restart policies see a failure
+set -o pipefail
 # "-t 0" disables colors when logging
 rtl_fm "$@" - | direwolf -c "$CONF" -t 0 -r 24000 -D 1 -

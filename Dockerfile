@@ -37,6 +37,8 @@ WORKDIR /
 
 COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/direwolf /usr/local/bin/
 COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/
+# Symbol and tocalls data used by direwolf to decode packet details
+COPY --from=builder /usr/local/share/direwolf /usr/local/share/direwolf
 COPY sdr-igate.conf.template /sdr-igate.conf.template
 COPY --chmod=755 run.sh /run.sh
 
