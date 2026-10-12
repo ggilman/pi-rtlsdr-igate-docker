@@ -47,6 +47,15 @@ OR you can use a running gpsd instance by setting the GPSD_HOST (and optional GP
 
 The container can run with a read-only root filesystem (`--read-only --tmpfs /tmp`).
 
+## Runs as a non-root user
+
+Dire Wolf warns repeatedly when run as root, and neither it nor `rtl_fm` needs root. The container starts as root only long enough to give the built-in `igate` user (UID/GID 9001) access to the devices you pass in, then switches to that user to run `rtl_fm` and `direwolf`.
+
+- **No host changes are needed.** Pass the SDR in with `--device /dev/bus/usb` (or `devices:` in compose) as before. The permission change is made to the container's own copy of the device node, so the host's `/dev` and its udev rules are untouched.
+- The same is done for the serial device named in `NMEA_GPS`.
+- `--privileged` is not required. Existing setups that still use it keep working.
+- If you run the container with your own `--user` / `user:`, the permission step is skipped. That user then needs read/write access to the SDR device itself, for example through a host udev rule.
+
 ## systemd script
 
 I've also included a systemd script which makes it easy to have the RaspberryPi start the IGate. To use it copy the systemd file to the appropriate location.

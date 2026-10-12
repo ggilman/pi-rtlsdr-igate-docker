@@ -31,7 +31,11 @@ LABEL description="Docker APRS IGate"
 
 # Install runtime dependencies (before COPY so script edits don't invalidate this layer)
 # gpsd provides libgps, needed for the GPSD_HOST option
-RUN apk add --no-cache alsa-lib libusb gpsd tini
+RUN apk add --no-cache alsa-lib libusb gpsd tini su-exec
+
+# Unprivileged user that rtl_fm and direwolf run as (see run.sh)
+# Fixed UID/GID 9001 so the user is identifiable on the host and in udev rules
+RUN addgroup -S -g 9001 igate && adduser -S -D -H -u 9001 -G igate -s /sbin/nologin igate
 
 WORKDIR /
 

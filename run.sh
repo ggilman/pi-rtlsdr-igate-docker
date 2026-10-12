@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# The container starts as root only long enough to give the unprivileged igate
+# user access to the passed-through SDR (and NMEA GPS) device nodes, then re-runs
+# this script as that user. The nodes live in the container's own /dev, so the
+# host's device permissions are not changed.
+if [ "$(id -u)" = 0 ]; then
+	for dev in $(find /dev/bus/usb -type c 2>/dev/null) $NMEA_GPS; do
+		if [ -c "$dev" ]; then
+			chgrp igate "$dev" && chmod g+rw "$dev"
+		fi
+	done
+	exec su-exec igate "$0" "$@"
+fi
+
 CONF_TEMPLATE=/sdr-igate.conf.template
 # Written to /tmp so the container can run with a read-only root filesystem
 CONF=/tmp/sdr-igate.conf
