@@ -8,7 +8,7 @@ ARG APP_VERSION=1.8.1
 ARG RTLSDR_COMMIT=448a6551ab68ad143b5129b82b345f15c13f8825
 
 # Install build dependencies
-RUN apk add --no-cache git gcc g++ make cmake linux-headers alsa-lib-dev libusb-dev
+RUN apk add --no-cache git gcc g++ make cmake linux-headers alsa-lib-dev libusb-dev gpsd-dev
 
 WORKDIR /build
 RUN git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
@@ -30,7 +30,8 @@ LABEL maintainer="George Gilman"
 LABEL description="Docker APRS IGate"
 
 # Install runtime dependencies (before COPY so script edits don't invalidate this layer)
-RUN apk add --no-cache alsa-lib libusb tini
+# gpsd provides libgps, needed for the GPSD_HOST option
+RUN apk add --no-cache alsa-lib libusb gpsd tini
 
 WORKDIR /
 
