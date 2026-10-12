@@ -15,5 +15,4 @@
   </builder>
   <platforms>linux/amd64,linux/arm64/v8</platforms>
   <upstream_version>1.8.1</upstream_version>
-  <extra_setting>some_value</extra_setting>
 </configuration>

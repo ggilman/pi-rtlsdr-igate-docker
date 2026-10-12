@@ -18,7 +18,7 @@ Environment='COMMENT=RaspberryPi + RTL-SDR + Direwolf'
 
 # In case we didn't shut down properly, try to remove any container with the same name
 ExecStartPre=-/usr/bin/docker rm -f docker-igate
-ExecStart=/usr/bin/docker run --name docker-igate --privileged \
+ExecStart=/usr/bin/docker run --name docker-igate --device /dev/bus/usb \
 	-e MYCALL= \
 	-e APRS_PASSWORD= \
 #	-e IGFILTER= \
@@ -28,7 +28,9 @@ ExecStart=/usr/bin/docker run --name docker-igate --privileged \
 #	-e GPSD_HOST=localhost \
 #	-e GPSD_PORT=2947 \
 #	-e COMMENT=${COMMENT} \
-	johnboiles/pi-rtlsdr-igate
+#	-e RTL_GAIN= \
+#	-e RTL_PPM= \
+	ggilman/rtlsdr-igate-docker
 ExecStop=/usr/bin/docker stop -t 2 docker-igate
 
 [Install]

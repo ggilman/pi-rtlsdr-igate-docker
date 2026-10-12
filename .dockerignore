@@ -1,3 +1,4 @@
 .git
 *.md
 build/
+build_debug_*.log

@@ -1,24 +1,29 @@
-version: "3.8"
 services:
   app:
     image: ggilman/rtlsdr-igate-docker:latest
     container_name: aprs
     restart: unless-stopped
     network_mode: bridge
+    read_only: true
+    tmpfs:
+      - /tmp
     environment:
-      - MYCALL=MYCALLL
+      - MYCALL=N0CALL-10
       - APRS_PASSWORD=0
-
-     #Optional Entries
-     # - DEVICE_INDEX=0
-     # - COMMENT='Docker APRS Igate'
       - LATITUDE=30.24344
       - LONGITUDE=-85.61304
-     # - BEACON_EVERY=10
-     # - APRS_FREQUENCY=144.39M
-     # - IGSERVER='noam.aprs2.net'
-     # - BEACON_DELAY=1
-     # - BEACON_EVERY=10
-     # - BEACON_SYMBOL='R\&'
+
+      # Optional entries (shown with defaults). Don't quote values here;
+      # quotes become part of the value in this list syntax.
+      # - DEVICE_INDEX=0
+      # - APRS_FREQUENCY=144.39M
+      # - RTL_GAIN=
+      # - RTL_PPM=
+      # - IGSERVER=noam.aprs2.net
+      # - IGFILTER=
+      # - COMMENT=Docker APRS IGate
+      # - BEACON_DELAY=1
+      # - BEACON_EVERY=10
+      # - BEACON_SYMBOL=R&
     devices:
       - /dev/bus/usb

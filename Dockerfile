@@ -3,30 +3,25 @@ ARG BASE_OS_TAG=3.21
 # Stage 1: Build Dependencies
 FROM alpine:${BASE_OS_TAG} AS builder
 
-ARG APP_VERSION
+ARG APP_VERSION=1.8.1
+# Pinned commit of the argilo rtl-sdr fork (for reproducible builds)
+ARG RTLSDR_COMMIT=448a6551ab68ad143b5129b82b345f15c13f8825
 
 # Install build dependencies
-RUN apk update && apk add --no-cache --virtual .build-deps bash git gcc g++ make cmake alsa-lib-dev linux-headers alsa-lib musl-utils libusb-dev
-
-# Blacklist rtl modules
-RUN printf "blacklist rtl2832\nblacklist r820t\nblacklist rtl2830\nblacklist dvb_usb_rtl28xxu\n" > /etc/modprobe.d/rtlsdr-blacklist.conf
+RUN apk add --no-cache git gcc g++ make cmake linux-headers alsa-lib-dev libusb-dev
 
 WORKDIR /build
-RUN git clone --depth 1 https://gitea.osmocom.org/argilo/rtl-sdr.git && \
-    cd rtl-sdr && mkdir build && cd build && cmake -Wno-dev ../ && make && make install
+RUN git clone https://gitea.osmocom.org/argilo/rtl-sdr.git && \
+    git -C rtl-sdr checkout ${RTLSDR_COMMIT} && \
+    cmake -S rtl-sdr -B rtl-sdr/build -Wno-dev -DCMAKE_BUILD_TYPE=Release && \
+    make -C rtl-sdr/build -j"$(nproc)" && make -C rtl-sdr/build install
 
-WORKDIR /build
 RUN git clone --depth 1 --branch ${APP_VERSION} https://github.com/wb2osz/direwolf.git && \
-    cd direwolf && mkdir build && cd build && cmake .. && make -j4 && make install
+    cmake -S direwolf -B direwolf/build -DCMAKE_BUILD_TYPE=Release && \
+    make -C direwolf/build -j"$(nproc)" && make -C direwolf/build install
 
-# Create the /usr/local/etc directory
-RUN mkdir -p /usr/local/etc/
-
-# Copy the direwolf.conf file from the build directory
-RUN cp /build/direwolf/build/direwolf.conf /usr/local/etc/direwolf.conf
-
-# Cleanup build artifacts and remove build dependencies
-RUN rm -rf /build/rtl-sdr /build/direwolf && apk del .build-deps
+# Strip debug symbols to shrink the final image
+RUN strip /usr/local/bin/rtl_fm /usr/local/bin/direwolf "$(readlink -f /usr/local/lib/librtlsdr.so.2)"
 
 # Stage 2: Final Image
 FROM alpine:${BASE_OS_TAG}
@@ -34,31 +29,19 @@ FROM alpine:${BASE_OS_TAG}
 LABEL maintainer="George Gilman"
 LABEL description="Docker APRS IGate"
 
-# Create default settings
-ENV IGSERVER=noam.aprs2.net
-ENV BEACON_DELAY=1
-ENV BEACON_EVERY=10
-ENV BEACON_SYMBOL=R\&
-ENV COMMENT="Docker APRS IGate"
-ENV LATITUDE=0.0
-ENV LONGITUDE=0.0
-ENV APRS_FREQUENCY=144.39M
-ENV DEVICE_INDEX=0
+# Install runtime dependencies (before COPY so script edits don't invalidate this layer)
+RUN apk add --no-cache alsa-lib libusb tini
 
 WORKDIR /
 
-COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/rtl_fm
-COPY --from=builder /usr/local/bin/direwolf /usr/local/bin/direwolf
-COPY --from=builder /usr/local/etc/direwolf.conf /usr/local/etc/direwolf.conf
-COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/librtlsdr.so.2
+COPY --from=builder /usr/local/bin/rtl_fm /usr/local/bin/direwolf /usr/local/bin/
+COPY --from=builder /usr/local/lib/librtlsdr.so.2 /usr/local/lib/
 COPY sdr-igate.conf.template /sdr-igate.conf.template
-COPY run.sh /run.sh
-RUN chmod +x /run.sh
+COPY --chmod=755 run.sh /run.sh
 
-# Install runtime dependencies
-RUN apk update && apk add --no-cache alsa-lib libusb
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD pgrep -x direwolf > /dev/null
 
+# tini -g forwards SIGTERM to the whole process group (rtl_fm and direwolf)
+ENTRYPOINT ["/sbin/tini", "-g", "--"]
 CMD ["/run.sh"]
